@@ -203,50 +203,6 @@ def train_network(training_data, params):
             elif subset_ratio >= params['subsize_max']: 
                 print(f"  Current subset ratio {subset_ratio:.1f}% >= Target subset ratio {params['subsize_max']:.1f}%!")
                 train_flag = False 
-                    
-#             if max_err > params['tol']:
-#                 for i in training_data['param']:
-#                     if np.linalg.norm(i-test_data['param'][idx]) < 1e-8:
-#                         print(f"  PARAMETERS EXIST, NOT adding it!")
-#                         param_flag = False
-#                         break
-#                 if param_flag:
-#                     print(f'* Update Training Set: add case {param_tmp}')
-#                     training_data['data'].append(test_data['data'][idx])
-#                     training_data['param'].append(test_data['param'][idx])
-#                     params['num_sindy'] += 1
-#                     params['param'] = training_data['param']
-#                     params['train_idx'].append(idx)
-#                     max_err_idx_param[-1].append((idx, param_tmp))
-#             else:
-#                 subset_ratio = params['subsize']/params['num_test']*100
-#                 if subset_ratio >= params['subsize_max'] and max_rel_err <= params['tol2']:
-#                     print(f"Error indicator <= tol! Max relative error <= tol! Subset ratio {subset_ratio:.1f} >= {params['subsize_max']:.1f}%!")
-#                     if 'sindy_max' not in params.keys():
-#                         train_flag = False
-#                 else:
-#                     param_flag = False
-#                     if max_rel_err > params['tol2']:
-#                         print(f'  Max relative error > tol!') 
-#                     if subset_ratio < params['subsize_max']:
-#                         params['subsize'] *= 2 # double the size of random subset for evaluation
-#                         print(f"  Subset ratio {subset_ratio:.1f}% < {params['subsize_max']:.1f}%, Double subset size to {params['subsize']}")
-            
-#             if 'sindy_max' in params.keys():
-#                 if params['num_sindy'] == params['sindy_max']+1:
-#                     print(f"  Max # SINDys {params['sindy_max']:d} is reached, training done!")
-#                     train_flag = False
-                    
-                
-            # Save temporary model
-#             model_params = []
-#             model_params.append(sindy_coefficients)
-#             model_params.append(sess.run(autoencoder_network['encoder_weights'], feed_dict={}))
-#             model_params.append(sess.run(autoencoder_network['encoder_biases'], feed_dict={}))
-#             model_params.append(sess.run(autoencoder_network['decoder_weights'], feed_dict={}))
-#             model_params.append(sess.run(autoencoder_network['decoder_biases'], feed_dict={}))
-#             pickle.dump(model_params, open(params['data_path'] + params['model_temp'] + '_params.pkl', 'wb'))
-#             params['coeff_exist'] = True
                 
     results_dict = {}
     results_dict['num_epochs'] = epoch_count
@@ -267,12 +223,24 @@ def train_network(training_data, params):
     return results_dict
     
 def sigmoid(x):
+    """
+    This function calculates the output of the Sigmoid activation 
+    given an input x.
+    """
     return 1 / (1 + np.exp(-x))
 
 def silu(x):
+    """
+    This function calculates the output of the SiLU activation 
+    given an input x.
+    """
     return x * sigmoid(x)
 
 def decoder(x, decoder_weights, decoder_biases, activation):
+    """
+    This function calculates the output of a decoder
+    given an input x.
+    """
     num_layers = len(decoder_weights)
     for i in range(num_layers-1):
         x = np.matmul(x, decoder_weights[i]) + decoder_biases[i]
@@ -286,6 +254,21 @@ def decoder(x, decoder_weights, decoder_biases, activation):
 
 
 def eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params, test_data, test_param, idx=None):
+    """
+    This function evaluates the model on a given testing parameter case.
+    
+    inputs:
+        sess: the tensorflow session
+        autoencoder_network: the autoencoder network
+        test_data: data of testing parameter case (could be updated to just provide the 
+                    initial condition of the testing parameter case)
+        idx: the index of the DI used for evaluation; used when knn=1; if knn=1 and it is None, 
+                the DI closest to the testing parameter will be used.
+    
+    outputs:
+        u_sim: prediction of full-order model solutions by DI and decoder
+        idx: the index of the DI closest to the testing parameter based on the Euclidean distance
+    """
     if 'include_sine' in params.keys():
         include_sine = params['include_sine']
     else:
@@ -326,6 +309,7 @@ def eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params, test_data
         for i,kidx in enumerate(knn_idx):
             sindy_coeff += psi[i] * test_set_results['sindy_coefficients'][kidx]
 
+    # predict latent-space dynamics given the initial condition of latent-space variables
     z_sim = sindy_simulate(test_set_results['z'][0,idx,:], 
                            test_data['t'].squeeze(), 
                            sindy_coeff, params['poly_order'], 
@@ -333,7 +317,6 @@ def eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params, test_data
     u_sim = decoder(z_sim, test_set_results['decoder_weights'], 
                     test_set_results['decoder_biases'], params['activation'])
     return u_sim, idx
-
 
 
 def err_map_subset(sess, autoencoder_network, params, test_data=None, err_type=1):
@@ -365,11 +348,9 @@ def err_map_subset(sess, autoencoder_network, params, test_data=None, err_type=1
     
     # select a random subset for evaluation
     rng = np.random.default_rng()
-#     a = np.arange(params['num_test'])
     a = np.setdiff1d(np.arange(params['num_test']),params['train_idx']) # exclude existing training cases
     rng.shuffle(a)
     subset = a[:params['subsize']]
-#     subset = np.random.choice(a, size=params['subsize'], replace=False)
     
     count = 0
     start_time = time()
@@ -489,12 +470,10 @@ def update_tol(sess, autoencoder_network, params, training_data, err_type=1):
         elif params['adaptive'] == 'reg_max':
             y_diff = y - reg.predict(x)
             tol_new = max(0, reg.coef_[0][0] * params['tol2'] + reg.intercept_[0] + y_diff.max())
-#             print('tol_new:', tol_new)
             
         elif params['adaptive'] == 'reg_min':
             y_diff = y - reg.predict(x)
             tol_new = max(0, reg.coef_[0][0] * params['tol2'] + reg.intercept_[0] + y_diff.min())
-#             print('tol_new:', tol_new)
 
     return tol_new, err2.max()
 
@@ -502,21 +481,17 @@ def update_tol(sess, autoencoder_network, params, training_data, err_type=1):
 
 def print_progress(sess, i, loss, losses, train_dict):
     """
-    Print loss function values to keep track of the training progress.
+    Print loss function values to keep track of the training progress
 
-    Arguments:
-        sess - the tensorflow session
-        i - the training iteration
-        loss - tensorflow object representing the total loss function used in training
-        losses - tuple of the individual losses that make up the total loss
-        train_dict - feed dictionary of training data
-        validation_dict - feed dictionary of validation data
-        x_norm - float, the mean square value of the input
-        sindy_predict_norm - float, the mean square value of the time derivatives of the input.
-        Can be first or second order time derivatives depending on the model order.
+    inputs:
+        sess: the tensorflow session
+        i: the training iteration
+        loss: tensorflow object representing the total loss function used in training
+        losses: tuple of the individual losses that make up the total loss
+        train_dict: feed dictionary of training data
 
-    Returns:
-        Tuple of losses calculated on the validation set.
+    outputs:
+        Tuple of losses calculated on the training set
     """
     training_loss_vals = sess.run((loss,) + tuple(losses.values()), feed_dict=train_dict)
     print("Epoch %d" % i)
@@ -527,22 +502,22 @@ def print_progress(sess, i, loss, losses, train_dict):
 
 def create_feed_dictionary(data, params, idxs=None):
     """
-    Create the feed dictionary for passing into tensorflow.
+    Create the feed dictionary for passing into tensorflow
 
-    Arguments:
-        data - Dictionary object containing the data to be passed in. Must contain input data x,
+    inputs:
+        data: Dictionary object containing the data to be passed in. Must contain input data x,
         along the first (and possibly second) order time derivatives dx (ddx).
-        params - Dictionary object containing model and training parameters. The relevant
+        params: Dictionary object containing model and training parameters. The relevant
         parameters are model_order (which determines whether the SINDy model predicts first or
         second order time derivatives), sequential_thresholding (which indicates whether or not
         coefficient thresholding is performed), coefficient_mask (optional if sequential
         thresholding is performed; 0/1 mask that selects the relevant coefficients in the SINDy
         model), and learning rate (float that determines the learning rate).
-        idxs - Optional array of indices that selects which examples from the dataset are passed
-        in to tensorflow. If None, all examples are used.
+        idxs: Optional array of indices that selects which examples from the dataset are passed
+        into tensorflow. If None, all examples are used.
 
-    Returns:
-        feed_dict - Dictionary object containing the relevant data to pass to tensorflow.
+    outputs:
+        feed_dict: Dictionary object containing the relevant data to pass to tensorflow
     """
     num_sindy = params['num_sindy']
     if idxs is None:
@@ -553,10 +528,8 @@ def create_feed_dictionary(data, params, idxs=None):
     data_dx = []
     for i in range(num_sindy):
         data_x.append(data['data'][i]['x'][idxs])
-#         if params['loss_weight_sindy_x'] > 0:
         data_dx.append(data['data'][i]['dx'][idxs])
-#         else:
-#             data_dx.append(np.zeros(data['data'][i]['x'].shape)[idxs])
+        
     feed_dict['x:0'] = np.stack(data_x, axis=1)   # [batch,num_sindy,input_dim]
     feed_dict['dx:0'] = np.stack(data_dx, axis=1) # [batch,num_sindy,input_dim]
     
@@ -572,23 +545,23 @@ def create_feed_dictionary(data, params, idxs=None):
 
 def create_feed_dictionary2(data, params, idxs=None):
     """
-    Create the feed dictionary for passing into tensorflow.
+    Create the feed dictionary for passing into tensorflow
     For testing set that has only 1 case!
 
-    Arguments:
-        data - Dictionary object containing the data to be passed in. Must contain input data x,
+    inputs:
+        data: Dictionary object containing the data to be passed in. Must contain input data x,
         along the first (and possibly second) order time derivatives dx (ddx).
-        params - Dictionary object containing model and training parameters. The relevant
+        params: Dictionary object containing model and training parameters. The relevant
         parameters are model_order (which determines whether the SINDy model predicts first or
         second order time derivatives), sequential_thresholding (which indicates whether or not
         coefficient thresholding is performed), coefficient_mask (optional if sequential
         thresholding is performed; 0/1 mask that selects the relevant coefficients in the SINDy
         model), and learning rate (float that determines the learning rate).
-        idxs - Optional array of indices that selects which examples from the dataset are passed
-        in to tensorflow. If None, all examples are used.
+        idxs: Optional array of indices that selects which examples from the dataset are passed
+        into tensorflow. If None, all examples are used.
 
-    Returns:
-        feed_dict - Dictionary object containing the relevant data to pass to tensorflow.
+    outputs:
+        feed_dict: Dictionary object containing the relevant data to pass to tensorflow
     """
     num_sindy = params['num_sindy']
     feed_dict = {}

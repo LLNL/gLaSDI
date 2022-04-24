@@ -297,10 +297,6 @@ def residual_2Dburger(x_prev, x, params):
     +1/(Re*dx**2)*(Dx.dot(u_free) + bxu_cur)
     +1/(Re*dy**2)*(Dy.dot(u_free) + byu_cur))
 
-#     f_u=(-1/dx*(u_free*(Mu_free - Bdudx0_cur))
-#     +1/(Re*dx**2)*(Dx.dot(u_free) + bxu_cur)
-#     +1/(Re*dy**2)*(Dy.dot(u_free) + byu_cur))
-    
     f_v=(-1/dx*(u_free*(Mv_free - Bdvdx0_cur))
     -1/dy*(v_free*(Nv_free - Bdvdy0_cur))
     +1/(Re*dx**2)*(Dx.dot(v_free) + bxv_cur)
@@ -331,7 +327,7 @@ def residual_MFEMex16(params):
                      '-no-vis',
                      '-no-visit',
                      '-res'])
-#     print('done\n')
+
     res = np.loadtxt(params['pde']['res_file'])
     return res
     
@@ -352,6 +348,6 @@ def residual_MFEMex9(params):
                      '-no-vis',
                      '-no-visit',
                      '-res'])
-#     print('done\n')
+
     res = np.loadtxt(params['pde']['res_file'])
     return res

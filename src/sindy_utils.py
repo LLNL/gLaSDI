@@ -23,10 +23,6 @@ def sindy_library(X, poly_order, include_sine=False, include_cosine=False):
     library = np.ones((m,l))
     index = 1
 
-#     for i in range(n):
-#         library[:,index] = X[:,i]
-#         index += 1
-        
     if poly_order > 0: 
         for i in range(n):
             library[:,index] = X[:,i]
@@ -83,10 +79,6 @@ def sindy_library_order2(X, dX, poly_order, include_sine=False, include_cosine=F
 
     X_combined = np.concatenate((X, dX), axis=1)
 
-#     for i in range(2*n):
-#         library[:,index] = X_combined[:,i]
-#         index += 1
-            
     if poly_order > 0:
         for i in range(2*n):
             library[:,index] = X_combined[:,i]
