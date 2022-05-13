@@ -1,4 +1,4 @@
-The [ex9.cpp] (https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from gLaSDI. The modified `ex9.cpp` and the corresponding executable file (`ex9`) have been uploaded to `gLaSDI/src/`. The executable (`ex9`) will be called to compute residual-based error indicator during training of gLaSDI.
+The [ex9.cpp](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from gLaSDI. The modified `ex9.cpp` and the corresponding executable file (`ex9`) have been uploaded to `gLaSDI/src/`. The executable (`ex9`) will be called to compute residual-based error indicator during training of gLaSDI.
 
 Procedure:
 - Create the following folders:

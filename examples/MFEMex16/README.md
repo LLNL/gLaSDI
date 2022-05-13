@@ -1,4 +1,4 @@
-The [ex16.cpp] (https://github.com/mfem/mfem/blob/master/examples/ex16.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from gLaSDI. The modified `ex16.cpp` and the corresponding executable file (`ex16`) have been uploaded to `gLaSDI/src/`. The executable (`ex16`) will be called to compute residual-based error indicator during training of gLaSDI.
+The [ex16.cpp](https://github.com/mfem/mfem/blob/master/examples/ex16.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from gLaSDI. The modified `ex16.cpp` and the corresponding executable file (`ex16`) have been uploaded to `gLaSDI/src/`. The executable (`ex16`) will be called to compute residual-based error indicator during training of gLaSDI.
 
 Procedure:
 - Create the following folders:
