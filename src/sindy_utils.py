@@ -228,4 +228,13 @@ def D_Lele(N,h):
     B7[4]=0
     B7[5]=0
     B=spdiags([B1, B2, B3, B4, B5, B6, B7],d,N,N)
-    return spsolve(A.tocsc(),B.tocsc()) 
+    return spsolve(A.tocsc(),B.tocsc())
+
+
+def derivative(x, tstop):
+    dxdt = np.empty(x.shape)
+    D = D_Lele(x.shape[0], tstop/x.shape[0])   
+    for i in range(x.shape[1]):
+        dxdt[:,i] = np.dot(D.toarray(), x[:,i])
+    del D
+    return dxdt

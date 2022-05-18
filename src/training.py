@@ -1,17 +1,19 @@
 import numpy as np
-# import tensorflow as tf
 import tensorflow.compat.v1 as tf
 tf.compat.v1.disable_v2_behavior()
 import pickle
-from autoencoder import full_network, define_loss
-from sindy_utils import sindy_simulate
-import pickle
+from autoencoder import full_network, define_loss, silu
+from sindy_utils import sindy_simulate, derivative
 from time import time
 import seaborn as sns
 import random
 from error_utils import *
 import copy
 from sklearn.linear_model import LinearRegression
+import seaborn as sns
+import matplotlib.patches as patches
+from copy import deepcopy
+import matplotlib.pyplot as plt
 
 def train_network(training_data, params):
     latent_dim = params['latent_dim']
@@ -59,8 +61,7 @@ def train_network(training_data, params):
     sindy_model_terms = [np.sum(params['coefficient_mask'])]
     
     train_flag = True # flag to indicate whether to perform training
-#     epoch_count = 0   # epoch counter
-    w = 1 # conter for the level of random subset evalutions
+    w = 1 # counter for the level of random subset evalutions
     while epoch_count < params['max_epochs'] and train_flag:
         tf.reset_default_graph() # clear graph
         tf.set_random_seed(params['seed'])
@@ -213,43 +214,28 @@ def train_network(training_data, params):
     results_dict['loss_sindy'] = final_losses[2]
     results_dict['loss_sindy_regularization'] = final_losses[3]
     results_dict['testing_losses'] = np.array(testing_losses)
-    
     results_dict['training_losses'] = np.array(training_losses)
     results_dict['sindy_model_terms'] = np.array(sindy_model_terms)
     results_dict['err_array'] = err_array
     results_dict['max_err_idx_param'] = max_err_idx_param
     results_dict['sindy_idx'] = sindy_idx
-
     return results_dict
     
-def sigmoid(x):
-    """
-    This function calculates the output of the Sigmoid activation 
-    given an input x.
-    """
-    return 1 / (1 + np.exp(-x))
 
-def silu(x):
+def NN(x, weights, biases, activation):
     """
-    This function calculates the output of the SiLU activation 
-    given an input x.
+    This networks serve as either an encoder or a decoder.
     """
-    return x * sigmoid(x)
-
-def decoder(x, decoder_weights, decoder_biases, activation):
-    """
-    This function calculates the output of a decoder
-    given an input x.
-    """
-    num_layers = len(decoder_weights)
+    num_layers = len(weights)
     for i in range(num_layers-1):
-        x = np.matmul(x, decoder_weights[i]) + decoder_biases[i]
+        x = np.matmul(x, weights[i]) + biases[i]
         if activation == 'tanh':
             x = np.tanh(x)
         elif activation == 'sigmoid':
-            x = sigmoid(x)    
+            x = 1.0 / (1.0 + np.exp(-x)) # sigmoid
+            
     # output layer (linear activation)
-    x = np.matmul(x, decoder_weights[-1]) + decoder_biases[-1]
+    x = np.matmul(x, weights[-1]) + biases[-1]
     return x
 
 
@@ -280,7 +266,6 @@ def eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params, test_data
         include_cosine = False
         
     test_dictionary = create_feed_dictionary2(test_data, params, idxs=1)
-
     tf_results = sess.run(tensorflow_run_tuple, feed_dict=test_dictionary)
     
     test_set_results = {}
@@ -314,8 +299,8 @@ def eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params, test_data
                            test_data['t'].squeeze(), 
                            sindy_coeff, params['poly_order'], 
                            include_sine, include_cosine)
-    u_sim = decoder(z_sim, test_set_results['decoder_weights'], 
-                    test_set_results['decoder_biases'], params['activation'])
+    u_sim = NN(z_sim, test_set_results['decoder_weights'], 
+               test_set_results['decoder_biases'], params['activation'])
     return u_sim, idx
 
 
@@ -368,58 +353,6 @@ def err_map_subset(sess, autoencoder_network, params, test_data=None, err_type=1
                 sindy_idx[i,j] = -1
                 err_array[i,j] = -1
             count += 1
-    end_time = time()
-    err_max = err_array.max()
-    err_idx = np.argmax(err_array)
-    print(f"  Time: {end_time-start_time:.2f} s, Case: {test_data['param'][err_idx]}, Tol: {params['tol']:.5f}, Max Error: {err_max:.6f}")
-    return err_array, err_max, err_idx, test_data['param'][err_idx], sindy_idx
-
-
-def err_map_subset2(sess, autoencoder_network, params, test_data=None, err_type=1):
-    """
-    This function computes errors in random subsets of the parameter space 
-    using a speciffied error indicator. The subset size and the threshold for 
-    error indicator are adjusted during training.
-    inputs:
-        test_data: dict, testing data
-        err_type: int, types of error indicator. 
-                1: max relative error (if test data available)
-                2: residual norm (mean)
-    outputs:
-        err_array: ndarray, errors in the parameter space
-        err_max: float, max error
-        err_idx: int, index of the max error
-        test_data['param'][err_idx]: ndarray, parameters of the case with max error
-        sindy_idx: ndarray, indices of local SINDys used for evaluation
-    """
-    tensorflow_run_tuple = ()
-    for key in autoencoder_network.keys():
-        tensorflow_run_tuple += (autoencoder_network[key],)
-    
-    test_param = params['test_param']
-    err_array = np.zeros(test_param.shape[0])
-    err_array2 = np.zeros(test_param.shape[0])
-    sindy_idx = np.zeros(test_param.shape[0])
-    
-    # select a random subset for evaluation
-    rng = np.random.default_rng()
-    a = np.setdiff1d(np.arange(params['num_test']),params['train_idx']) # exclude existing training cases
-    rng.shuffle(a)
-    subset = a[:params['subsize']]
-    
-    count = 0
-    start_time = time()
-    for i,p in enumerate(test_param):
-        sindy_idx[i] = -1
-        err_array[i] = -1
-        if i in subset:
-            u_sim, idx = eval_perf(sess, tensorflow_run_tuple, autoencoder_network, params,
-                                   test_data['data'][i], test_data['param'][i])
-            sindy_idx[i] = idx+1
-            params['pde']['param'] = p
-            err_array[i] = err_indicator(u_sim, params, data=test_data['data'][count]['x'], 
-                                         err_type=err_type) # residual norm of all time steps
-            
     end_time = time()
     err_max = err_array.max()
     err_idx = np.argmax(err_array)
@@ -508,8 +441,7 @@ def create_feed_dictionary(data, params, idxs=None):
         data: Dictionary object containing the data to be passed in. Must contain input data x,
         along the first (and possibly second) order time derivatives dx (ddx).
         params: Dictionary object containing model and training parameters. The relevant
-        parameters are model_order (which determines whether the SINDy model predicts first or
-        second order time derivatives), sequential_thresholding (which indicates whether or not
+        parameters are sequential_thresholding (which indicates whether or not
         coefficient thresholding is performed), coefficient_mask (optional if sequential
         thresholding is performed; 0/1 mask that selects the relevant coefficients in the SINDy
         model), and learning rate (float that determines the learning rate).
@@ -533,9 +465,6 @@ def create_feed_dictionary(data, params, idxs=None):
     feed_dict['x:0'] = np.stack(data_x, axis=1)   # [batch,num_sindy,input_dim]
     feed_dict['dx:0'] = np.stack(data_dx, axis=1) # [batch,num_sindy,input_dim]
     
-    if params['model_order'] == 2:
-        feed_dict['ddx:0'] = data['ddx'][idxs]
-        
     if params['sequential_thresholding']:
         feed_dict['coefficient_mask:0'] = params['coefficient_mask']
         
@@ -552,8 +481,7 @@ def create_feed_dictionary2(data, params, idxs=None):
         data: Dictionary object containing the data to be passed in. Must contain input data x,
         along the first (and possibly second) order time derivatives dx (ddx).
         params: Dictionary object containing model and training parameters. The relevant
-        parameters are model_order (which determines whether the SINDy model predicts first or
-        second order time derivatives), sequential_thresholding (which indicates whether or not
+        parameters are sequential_thresholding (which indicates whether or not
         coefficient thresholding is performed), coefficient_mask (optional if sequential
         thresholding is performed; 0/1 mask that selects the relevant coefficients in the SINDy
         model), and learning rate (float that determines the learning rate).
@@ -590,3 +518,143 @@ def create_feed_dictionary2(data, params, idxs=None):
         
     feed_dict['learning_rate:0'] = params['learning_rate']
     return feed_dict
+
+
+def eval_model(test_data, params, test_param, idx=None, knn=4, calc_dz=False, calc_du=False):
+    """
+    This function evaluates the trained gLaSDI model.
+    """
+    timer = []
+    
+    # Step 1: set up tf graph and load parameters, can be optimized, excluded from ROM computational time
+    timer.append(time()) 
+    include_sine = False
+    include_cosine = False
+    if 'include_sine' in params.keys():
+        include_sine = params['include_sine']
+    if 'include_cosine' in params.keys():
+        include_cosine = params['include_cosine']
+        
+    z_encoder = NN(test_data['x'], params['model_params'][1], params['model_params'][2], params['activation']) # encoder
+    u_decoder = NN(z_encoder, params['model_params'][3], params['model_params'][4], params['activation']) # decoder
+    
+    
+    # Step 2: find the nearest neighbor (optional)
+    timer.append(time()) 
+    if idx == None:
+        train_param = np.stack(params['param'])
+        idx = np.argmin(np.linalg.norm(train_param-test_param, axis=1))
+    
+    
+    # Step 3: calculate SINDy coefficients
+    timer.append(time())        
+    if knn == 1:
+        print(f"Index of the nearest local SINDy: {idx+1}")
+        sindy_coeff = params['model_params'][0][idx]
+        
+    else: # KNN convex interpolation of coefficients
+        dist = np.linalg.norm(train_param-test_param, axis=1)
+        knn_idx = np.argsort(dist)[:knn]
+        phi = np.zeros_like(knn_idx)
+        if dist[knn_idx[0]] == 0: # check if the min distance is zero
+            phi[0] = 1
+        else:
+            phi = 1 / np.linalg.norm(train_param[knn_idx]-test_param, axis=1)**2
+        psi = phi / phi.sum()
+
+        sindy_coeff = np.zeros(params['model_params'][0][0].shape)
+        for i,kidx in enumerate(knn_idx):
+            sindy_coeff += psi[i] * params['model_params'][0][kidx]
+            
+
+    # Step 4: lastent-space dynamics prediction and obtain physical dynamics
+    timer.append(time())
+    z_sim = sindy_simulate(z_encoder[0,:], test_data['t'].squeeze(), 
+                           sindy_coeff, params['poly_order'], 
+                           include_sine,include_cosine)
+    u_sim = NN(z_sim, params['model_params'][3], params['model_params'][4], params['activation'])
+
+    timer.append(time())
+    
+    if calc_dz:
+        dz_encoder = derivative(z_encoder,params['pde']['tstop'])
+        dz_sim = derivative(z_sim,params['pde']['tstop'])
+    else:
+        dz_encoder = 0
+        dz_sim = 0
+        
+    if calc_du:
+        du_decoder = derivative(u_decoder,params['pde']['tstop'])
+        du_sim = derivative(u_sim,params['pde']['tstop'])
+    else:
+        du_decoder = 0
+        du_sim = 0
+    
+    timer1 = np.array(timer)
+    timer2 = timer1[1:]
+    timer_rom = timer2 - timer1[:-1]
+    return u_decoder, du_decoder, u_sim, du_sim, z_encoder, dz_encoder, z_sim, dz_sim, idx, timer_rom
+
+
+# heat map of max relative errors
+def max_err_heatmap(max_err, sindy_idx, params, p1_test, p2_test, data_path, idx_list=[], idx_param=[], 
+                    xlabel='param1', ylabel='param2', label='Max. Relative Error (%)', dtype='int', scale=1):
+    sns.set(font_scale=1.3)
+    if dtype == 'int':
+        max_err = max_err.astype(int)
+        fmt1 = 'd'
+    else:
+        fmt1 = '.1f'
+    rect = []
+    for i in range(len(idx_param)):
+        print(f"idx: {idx_param[i][0]}, param: {idx_param[i][1]}")
+        idd = idx_param[i][0]
+        rect.append(patches.Rectangle((idx_list[idd,1], idx_list[idd,0]), 1, 1, linewidth=2, edgecolor='k', facecolor='none'))
+    rect2 = deepcopy(rect)
+    
+    if max_err.size < 100:
+        fig = plt.figure(figsize=(5,5))
+    else:
+        fig = plt.figure(figsize=(9,9))
+
+    fontsize = 14
+    if max_err.max() >= 10:
+        fontsize = 12
+        max_err = max_err.astype(int)
+        fmt1 = 'd'
+    ax = fig.add_subplot(111)
+    cbar_ax = fig.add_axes([0.99, 0.19, 0.02, 0.7])
+    if label == 'Residual Norm':
+        vmax = params['tol']*scale
+    else:
+        vmax = max_err.max()*scale
+    sns.heatmap(max_err*scale, ax=ax, square=True, 
+                xticklabels=p2_test, yticklabels=p1_test, 
+                annot=True, annot_kws={'size':fontsize}, fmt=fmt1, 
+                cbar_ax=cbar_ax, cbar=True, cmap='vlag', robust=True, vmin=0, vmax=vmax)
+        
+    for i in rect2:
+        ax.add_patch(i)
+        
+    # format text labels
+    fmt = '{:0.2f}'
+    xticklabels = []
+    for item in ax.get_xticklabels():
+        item.set_text(fmt.format(float(item.get_text())))
+        xticklabels += [item]
+    yticklabels = []
+    for item in ax.get_yticklabels():
+        item.set_text(fmt.format(float(item.get_text())))
+        yticklabels += [item]
+    ax.set_xticklabels(xticklabels)
+    ax.set_yticklabels(yticklabels)
+    ax.set_xlabel(xlabel, fontsize=24)
+    ax.set_ylabel(ylabel, fontsize=24)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=30) 
+    
+    plt.tight_layout()
+    if label == 'Residual Norm':
+        plt.savefig(data_path + f'heatmap_resNorm.png', bbox_inches='tight')
+    else:
+        plt.savefig(data_path + f'heatmap_maxRelErr_glasdi.png', bbox_inches='tight')
+    plt.show()
