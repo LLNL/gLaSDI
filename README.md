@@ -74,7 +74,3 @@ The Jupyter notebooks for data generation, model training and evaluation are pro
 - `subsize_max` - int, maximum random subset size in percentage
 - `adapative` - str, the method used to update the error tolerance; 'mean': use mean ratios between error indicator and max relative errors; 'reg_mean': use linear regression line; 'reg_max': use linear regression line shifted by std to upper bound; 'reg_min': use linear regression line shifted by std to lower bound, more conservative; 
 - `pde` - dict, stores the parameters related to the PDE
-
-
-## Questions/Comments
-Questions and comments should be directed to xih251@eng.uscd.edu
