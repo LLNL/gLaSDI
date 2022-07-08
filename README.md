@@ -8,6 +8,8 @@
 
 
 ## Required Packages
+The following versions of packages have been verified to work. Other versions may also work.
+- Python: 3.7.10
 - TensorFlow: 2.2.0
 - Numpy: 1.17.4
 - Scipy: 1.4.1
