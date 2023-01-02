@@ -1,4 +1,4 @@
-## Certified data-driven physics-informed greedy auto-encoder simulator
+## gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identification
 - In the proposed framework, an autoencoder discovers intrinsic nonlinear latent representations of high-dimensional data, while dynamics identification (DI) models capture local latent-space dynamics.  
 - An interactive training algorithm is adopted for the autoencoder and local DI models, which enables identification of simple latent-space dynamics and enhances accuracy and efficiency of data-driven reduced-order modeling. 
 - To maximize and accelerate the exploration of the parameter space for the optimal model performance, an adaptive greedy sampling algorithm integrated with a physics-informed residual-based error indicator and random-subset evaluation is introduced to search for the optimal training samples on-the-fly.
@@ -26,7 +26,7 @@ Three examples are provided, including
 - 2D Burgers Equation
 - Time-Dependent Radial Advection ([MFEM Example 9](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp)).
 
-The Jupyter notebooks for data generation, model training and evaluation are provided in `rom/examples/`. 
+The Jupyter notebooks for data generation, model training and evaluation are provided in `glasdi/examples/`. 
 
 
 ## Description of Parameters:
