@@ -1,7 +1,7 @@
 The proposed  framework is applied to construct a non-intrusive reduced-order model of the [**MFEM Example 9 Time-Dependent Radial Advection**](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp).
 
 
-The [ex9.cpp](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from the model. The modified `ex9.cpp` is located at `rom/examples/MFEMex9/` and the corresponding executable file (`ex9`) is located at `rom/src/`. The executable (`ex9`) will be called to compute residual-based error indicator during training of the model.
+The [ex9.cpp](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from the model. The modified `ex9.cpp` is located at `glasdi/examples/MFEMex9/` and the corresponding executable file (`ex9`) is located at `glasdi/src/`. The executable (`ex9`) will be called to compute residual-based error indicator during training of the model.
  
  
 **Procedure**:
