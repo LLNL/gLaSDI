@@ -1,11 +1,11 @@
 The proposed  framework is applied to construct a non-intrusive reduced-order model of the [**MFEM Example 9 Time-Dependent Radial Advection**](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp).
 
 
-The [ex9.cpp](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from the model. The modified `ex9.cpp` and the corresponding executable (`ex9`) are located at `glasdi/src/`. The executable (`ex9`) will be called to compute residual-based error indicator during training of the model.
+The [ex9.cpp](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp) is modified to include the parameterized initial condition and an option to compute the residual given the predicted solutions from the model. The modified `ex9.cpp` and the corresponding executable (`ex9`) are located at `glasdi/src/`. The executable (`ex9`) can be used to generate data and will be called to compute residual-based error indicator during training of the model.
  
  
 **Procedure**:
-- run `generate_data.ipynb` to generate dataset
+- run `generate_data.ipynb` to generate dataset; A mesh file ([`periodic-square.mesh`](https://github.com/mfem/mfem/blob/master/data/periodic-square.mesh)) is included in `glasdi/examples/MFEMex9/`.
     1. generate initial training parameter cases on a given parameter space
     2. generate a dataset of discrete parameter space for adaptive greedy sampling and evaluation
 - run `train_model.ipynb` to train a model by submitting a job using `batch_job.bsub`
