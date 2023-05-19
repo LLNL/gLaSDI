@@ -85,8 +85,8 @@ The Jupyter notebooks for data generation, model training and evaluation are pro
 - `pde` - dict, stores the parameters related to the PDE
 
 
-## Cite
-He, X., Choi, Y., Fries, W. D., Belof, J., & Chen, J. S. (2022). gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identification. arXiv preprint arXiv:2204.12005.
+## Citation
+[He, X., Choi, Y., Fries, W. D., Belof, J., & Chen, J. S. (2022). gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identification. arXiv preprint arXiv:2204.12005v2.](https://arxiv.org/abs/2204.12005v2)
 
 ## License
 
