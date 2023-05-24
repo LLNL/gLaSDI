@@ -4,7 +4,7 @@
 - To maximize and accelerate the exploration of the parameter space for the optimal model performance, an adaptive greedy sampling algorithm integrated with a physics-informed residual-based error indicator and random-subset evaluation is introduced to search for the optimal training samples on-the-fly.
 - Further, to exploit local latent-space dynamics captured by the local DI models for an improved modeling accuracy with a minimum number of local DI models in the parameter space, an efficient k-nearest neighbor convex interpolation scheme is employed.
 - The effectiveness of the proposed framework is demonstrated by modeling various nonlinear dynamical problems, including Burgers equations, nonlinear heat conduction, and radial advection. 
-- The proposed adaptive greedy sampling outperforms the conventional predefined uniform sampling in terms of accuracy. Compared with the high-fidelity models, the proposed method achieves 66 to 4,417x speed-up with 1 to 5% relative errors.
+- The proposed adaptive greedy sampling outperforms the conventional predefined uniform sampling in terms of accuracy. Compared with the high-fidelity models, the proposed method achieves 17 to 2,658x speed-up with 1 to 5% relative errors.
 
 
 ## Required Packages
@@ -31,8 +31,9 @@ The following versions of packages have been verified to work. Other versions ma
 Three examples are provided, including 
 - 1D Burgers Equation 
 - 2D Burgers Equation
-- Time-Dependent Radial Advection ([MFEM Example 9](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp)).
-
+- Time-Dependent Radial Advection ([MFEM Example 9](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp))
+- Time-Dependent Heat Conduction ([MFEM Example 16](https://github.com/mfem/mfem/blob/master/examples/ex16.cpp))
+- 
 The Jupyter notebooks for data generation, model training and evaluation are provided in `glasdi/examples/`. 
 
 
