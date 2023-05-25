@@ -33,7 +33,7 @@ Three examples are provided, including
 - 2D Burgers Equation
 - Time-Dependent Radial Advection ([MFEM Example 9](https://github.com/mfem/mfem/blob/master/examples/ex9.cpp))
 - Time-Dependent Heat Conduction ([MFEM Example 16](https://github.com/mfem/mfem/blob/master/examples/ex16.cpp))
-- 
+
 The Jupyter notebooks for data generation, model training and evaluation are provided in `glasdi/examples/`. 
 
 
