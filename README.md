@@ -87,7 +87,10 @@ The Jupyter notebooks for data generation, model training and evaluation are pro
 
 
 ## Citation
-[He, X., Choi, Y., Fries, W. D., Belof, J., & Chen, J. S. (2022). gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identification. arXiv preprint arXiv:2204.12005v2.](https://arxiv.org/abs/2204.12005v2)
+[He, X., Choi, Y., Fries, W. D., Belof, J., & Chen, J. S. (2022). gLaSDI: Parametric Physics-informed Greedy Latent Space Dynamics Identification. Journal of Computational Physics, 112267.]([https://arxiv.org/abs/2204.12005v2](https://www.sciencedirect.com/science/article/abs/pii/S0021999123003625))
+
+## Aknowledgement
+Youngsoo was also supported for this work by the CHaRMNET Mathematical Multifaceted Integrated Capability Center (MMICC).
 
 ## License
 gLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT. See
