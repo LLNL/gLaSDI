@@ -136,6 +136,17 @@ def train_network(training_data, params):
                     pickle.dump(params, open(params['fig_path'] + params['save_name'] + '_params.pkl', 'wb'))
                     saver.save(sess, params['fig_path'] + params['save_name'])
             
+            # Store updated trainable parameters before evaluation on random subset
+            sindy_coefficients = []
+            for i in range(len(autoencoder_network['sindy_coefficients'])):
+                sindy_coefficients.append(sess.run(autoencoder_network['sindy_coefficients'][i], feed_dict={}))
+            params['model_params'] = []
+            params['model_params'].append(sindy_coefficients)
+            params['model_params'].append(sess.run(autoencoder_network['encoder_weights'], feed_dict={}))
+            params['model_params'].append(sess.run(autoencoder_network['encoder_biases'], feed_dict={}))
+            params['model_params'].append(sess.run(autoencoder_network['decoder_weights'], feed_dict={}))
+            params['model_params'].append(sess.run(autoencoder_network['decoder_biases'], feed_dict={}))
+            
             
             # Evaluate current model on a random subset of parameters using a specified error indicator
             print(f'* Evaluating')
@@ -161,16 +172,6 @@ def train_network(training_data, params):
             params['max_err_idx_param'] = max_err_idx_param
             params['sindy_idx'] = sindy_idx
             params['epoch_count'] = epoch_count
-            
-            sindy_coefficients = []
-            for i in range(len(autoencoder_network['sindy_coefficients'])):
-                sindy_coefficients.append(sess.run(autoencoder_network['sindy_coefficients'][i], feed_dict={}))
-            params['model_params'] = []
-            params['model_params'].append(sindy_coefficients)
-            params['model_params'].append(sess.run(autoencoder_network['encoder_weights'], feed_dict={}))
-            params['model_params'].append(sess.run(autoencoder_network['encoder_biases'], feed_dict={}))
-            params['model_params'].append(sess.run(autoencoder_network['decoder_weights'], feed_dict={}))
-            params['model_params'].append(sess.run(autoencoder_network['decoder_biases'], feed_dict={}))
             pickle.dump(params, open(params['fig_path'] + params['save_name'] + '_params.pkl', 'wb'))
             final_losses = sess.run((losses['decoder'], losses['sindy_x'], losses['sindy_z'],
                                      losses['sindy_regularization']), feed_dict=train_dict)
