@@ -94,6 +94,6 @@ Y. Choi was also supported for this work by the CHaRMNET Mathematical Multifacet
 
 ## License
 gLaSDI is distributed under the terms of the MIT license. All new contributions must be made under the MIT. See
-[LICENSE-MIT](https://github.com/LLNL/libROM/blob/master/LICENSE-MIT)
+[LICENSE-MIT](https://github.com/LLNL/gLaSDI/blob/main/LICENSE)
 
 LLNL Release Nubmer: LLNL-CODE-842327
