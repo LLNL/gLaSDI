@@ -229,7 +229,9 @@ def train_network(training_data, params):
     results_dict['sindy_idx'] = sindy_idx
     return results_dict
     
-
+def softplus(x):
+    return np.log(1 + np.exp(-np.abs(x))) + np.maximum(x,0)
+    
 def NN(x, weights, biases, activation):
     """
     This network serves as either an encoder or a decoder, 
@@ -242,6 +244,10 @@ def NN(x, weights, biases, activation):
             x = np.tanh(x)
         elif activation == 'sigmoid':
             x = 1.0 / (1.0 + np.exp(-x)) # sigmoid
+        elif activation == 'relu':
+            x = np.maximum(0,x)
+        elif activation == 'softplus':
+            x = softplus(x)
             
     # output layer (linear activation)
     x = np.matmul(x, weights[-1]) + biases[-1]
